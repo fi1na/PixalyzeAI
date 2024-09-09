@@ -2,11 +2,21 @@
 import React from 'react';
 
 export const MainContainer = () => {
+  const handleImageUpload = () => {};
   return (
     <main className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
         <div className='bg-white rounded-lg shadow-xl overflow-hidden'>
             <div className='p-8'>
-                <h2 className='text-3xl '>Identify your image</h2>
+                <h2 className='text-3xl font-extrabold text-gray-900 mb-8 text-center'>Identify your image</h2>
+                <div className='mb-8'>
+                  <label htmlFor='image-upload'
+                  className='block text-sm font-medium text-gray-700 mb-2'>
+                    Upload An Image
+                  </label>
+                  <input type='file' id='image-upload' accept='image/*' onChange={handleImageUpload}
+                  className='block w-full text-sm to-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50
+                  file:text-blue-700 hover:file:bg-blue-100 transition duration-150 ease-in-out' />
+                </div>
             </div>
         </div>
     </main>
