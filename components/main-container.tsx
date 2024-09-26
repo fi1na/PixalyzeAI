@@ -14,7 +14,7 @@ export const MainContainer = () => {
 
     }
   };
-  const identifyImage =async (additionPrompt: string="")=>{
+  const identifyImage =async (additionalPrompt: string="")=>{
     if(!image) return;
     setLoading(true);
     const genAI = new GoogleGenerativeAI(
@@ -23,13 +23,26 @@ export const MainContainer = () => {
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
     });
-    try{
 
+
+    try{
+      const imageParts = await fileToGenerativePart(image);
+      const result = await model.generateContent([
+        `Identify this image and provide its name nad important information 
+        including a brief explanation about that image, ${additionalPrompt}`,
+        imageParts,
+      ]);
+
+      const response = await result.response;
+      const text = response.text().trim();
+      console.log(text);
 
     }
     catch (error)
     {
       console.error((error as Error)?.message);
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -48,9 +61,10 @@ export const MainContainer = () => {
             }
         })
       }; 
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
     });
-
-
+   
   };
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
