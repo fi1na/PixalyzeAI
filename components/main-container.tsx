@@ -1,5 +1,8 @@
 "use client";
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { rejects } from 'assert';
 import Image from 'next/image';
+import { resolve } from 'path/posix';
 import React, { useState } from 'react';
 
 export const MainContainer = () => {
@@ -10,6 +13,44 @@ export const MainContainer = () => {
       setImage(e.target.files[0]);
 
     }
+  };
+  const identifyImage =async (additionPrompt: string="")=>{
+    if(!image) return;
+    setLoading(true);
+    const genAI = new GoogleGenerativeAI(
+      process.env.NEXT_PUBLIC_GOOGLE_GEMINI_API_KEY!
+    );
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+    });
+    try{
+
+
+    }
+    catch (error)
+    {
+      console.error((error as Error)?.message);
+    }
+  };
+
+  const fileToGenerativePart =async (file : File) : Promise<{
+    inlineData : {data : string; mimeType : string};
+  }>=>{
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onloadend = ()=>{
+        const base64Data = reader.result as string;
+        const base64Content = base64Data.split(",")[1]
+        resolve({
+          inlineData: {
+            data: base64Content,
+            mimeType: file.type
+            }
+        })
+      }; 
+    });
+
+
   };
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -47,7 +88,9 @@ export const MainContainer = () => {
 
             </div>
             )}
-            <button type="button" disabled={!image || loading} className='w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed font-medium text-lg'>
+            <button type="button" 
+            onClick={()=>identifyImage()}
+            disabled={!image || loading} className='w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed font-medium text-lg'>
               {loading ? "Loading..." : "Identify Image"}
             </button>
 
