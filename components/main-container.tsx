@@ -1,13 +1,17 @@
 "use client";
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { rejects } from 'assert';
+import { generateKey } from 'crypto';
 import Image from 'next/image';
 import { resolve } from 'path/posix';
 import React, { useState } from 'react';
 
 export const MainContainer = () => {
   const [image, setImage] = useState<File | null>(null);
-  const [loading, setLoading]= useState(false)
+  const [loading, setLoading]= useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const [keywords, setKeywords] = useState<string[]>([]);
+
   const handleImageUpload = (e : React.ChangeEvent<HTMLInputElement>) => {
     if(e.target.files && e.target.files[0]){
       setImage(e.target.files[0]);
@@ -34,9 +38,14 @@ export const MainContainer = () => {
       ]);
 
       const response = await result.response;
-      const text = response.text().trim();
-      console.log(text);
-
+      const text = response.text().trim()
+      .replace(/```/g, "")
+      .replace(/\*\*/g, "")
+      .replace(/\*\*/g, "")
+      .replace(/-\s*/g, "")
+      .replace(/\n\s*\n/g, "\n");
+      setResult(text);
+      generateKeywords(text) 
     }
     catch (error)
     {
@@ -46,26 +55,42 @@ export const MainContainer = () => {
     }
   };
 
-  const fileToGenerativePart =async (file : File) : Promise<{
-    inlineData : {data : string; mimeType : string};
-  }>=>{
-    return new Promise((resolve, reject)=>{
+  const fileToGenerativePart = async (
+    file: File
+  ): Promise<{
+    inlineData: { data: string; mimeType: string };
+  }> => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onloadend = ()=>{
+      reader.onloadend = () => {
         const base64Data = reader.result as string;
-        const base64Content = base64Data.split(",")[1]
+        const base64Content = base64Data.split(",")[1];
         resolve({
           inlineData: {
             data: base64Content,
-            mimeType: file.type
-            }
-        })
-      }; 
+            mimeType: file.type,
+          },
+        });
+      };
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
-   
   };
+
+    const generateKeywords=(text : string)=>{
+      const words=text.split(/\s+/) //split string into array of words--supllying a regular exp to it
+      const keywordsSet = new Set<string>();
+      words.forEach((word) => {
+        if (
+          word.length > 4 && 
+          !["this", "that", "with", "from", "have"].includes(word.toLowerCase())
+        ) {
+          keywordsSet.add(word);
+          }
+          });
+          setKeywords(Array.from(keywordsSet).slice(0,5));
+    }
+
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="bg-white rounded-lg shadow-xl overflow-hidden">
@@ -109,6 +134,44 @@ export const MainContainer = () => {
             </button>
 
         </div>
+
+        {result && (
+          <div className='bg-blue-50 p-8 border-t border-blue-100'>
+            <h3 className='text-2xl font-bold text-blue-800 mb-4'>Image Information</h3>
+            <div className='max-w-none'>
+              {result.split("\n").map((line, index)=>{
+                if(line.startsWith("Important Information:") || line.startsWith("Other Information:")){
+                  return (
+                    <h4 className="text-xl font-semibold mt-4 mb-2 text-blue-700" key={index}>
+                      {line}
+                    </h4>
+                  );
+                  
+                }
+                else if(line.match(/^\d+\./) || line.startsWith("-")){
+                  return (
+                    <li key={index} className='ml-4 mb-2 text-gray-700'>
+                      {line}
+                    </li>
+                  );
+                }
+                else if(line.trim() != "")
+                {
+                  return (
+                    <p key={index} className="mb-2 text-gray-800">{line}</p>
+                  );
+                }
+                return null;
+              })}
+            </div>
+            <div className='mt-6'>
+              <h4 className='text-lg font-semibold mb-2 text-blue-700'>Related Keywords</h4>
+              <div className='fkex flex-wrap gap-2'>
+
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
